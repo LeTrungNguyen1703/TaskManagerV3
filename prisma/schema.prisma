@@ -37,8 +37,9 @@ model tasks {
 
 model users {
   id               Int                @id @default(autoincrement())
-  name             String
+  username         String             @unique
   email            String             @unique
+  password_hash    String
   created_at       DateTime?          @default(now()) @db.Timestamptz(6)
   task_assignments task_assignments[]
 }
