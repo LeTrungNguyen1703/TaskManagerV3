@@ -7,20 +7,19 @@ import { JwtPayload } from './interfaces/jwtPayload';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly usersService: UsersService, private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-  async signIn(loginRequest: LoginRequest) {
-    const user = await this.handleMissingCredentials(loginRequest);
-
-    const payload: JwtPayload = {sub: user.id, username: user.username}
+  async login(user: any) {
+    const payload: JwtPayload = { sub: user.id, username: user.username };
     return {
-      access_token: await this.jwtService.signAsync(payload)
-    }
-
+      access_token: await this.jwtService.signAsync(payload),
+    };
   }
 
-  private async handleMissingCredentials(loginRequest: LoginRequest) {
-    const { username, password } = loginRequest;
+  async validateUser(username: string, password: string) {
     const user = await this.usersService.findOneByUsername(username);
     if (!bcrypt.compareSync(password, user.password_hash)) {
       throw new UnauthorizedException('Wrong password');

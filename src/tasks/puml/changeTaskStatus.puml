@@ -1,0 +1,40 @@
+@startuml
+title Change Task Status - Sequence Diagram
+
+actor User
+participant "TasksController" as Controller
+participant "AuthGuard" as Guard
+participant "TasksService" as Service
+participant "PrismaService" as Prisma
+database "Database" as DB
+participant "Cache (optional)" as Cache
+
+User -> Controller: PATCH /tasks/{id}/status/{status}
+note right of User: Request includes bearer token
+
+Controller -> Guard: validate token (AuthGuard)
+alt authenticated
+  Guard -> Controller: allow
+  Controller -> Service: changeTaskStatus(id, status)
+  Service -> Prisma: prisma.tasks.update({ where: {id}, data: { status } })
+  Prisma -> DB: execute UPDATE
+  DB --> Prisma: updated row (or none)
+  alt updated task returned
+    Prisma --> Service: updated task
+    Service --> Controller: { messages: "Task with ID {id} has been updated to status {status}" }
+    Controller --> User: 200 OK + messages
+  else no row updated
+    Prisma --> Service: null
+    Service -> Controller: throw NotFoundException
+    Controller --> User: 404 Not Found
+  end
+else not authenticated
+  Guard --> Controller: throw UnauthorizedException
+  Controller --> User: 401 Unauthorized
+end
+
+note over Service, Controller: Cache invalidation is not currently performed here
+note over Cache: Consider calling cache.del('tasks') after status change
+
+@enduml
+

@@ -3,14 +3,10 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   UseGuards,
-  Req,
+  Request,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { LoginRequest } from './dto/create-auth.dto';
 import {
   ApiBearerAuth,
@@ -18,59 +14,30 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { AuthGuard } from './auth.guard';
-import { JwtPayload } from './interfaces/jwtPayload';
+import { LocalAuthGuard } from './local-auth.guard';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @UseGuards(LocalAuthGuard)
+  @Post('login')
   @ApiOperation({ summary: 'User login' })
   @ApiBody({ type: LoginRequest })
   @ApiResponse({
     status: 200,
-    description: 'Successful login returns JWT token.',
-    schema: {
-      properties: {
-        access_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.....',
-        },
-        payload: {
-          type: 'object',
-          example: { sub: 1, username: 'john_doe' },
-        },
-      },
-    },
+    description: 'Returns JWT token',
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized. Invalid credentials.',
-  })
-  @Post('login')
-  signIn(@Body() loginRequest: LoginRequest) {
-    return this.authService.signIn(loginRequest);
+  async login(@Request() req) {
+    return this.authService.login(req.user);
   }
 
-  @ApiOperation({ summary: 'Get user profile' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns user profile information.',
-    schema: {
-      properties: {
-        sub: { type: 'number', example: 1 },
-        username: { type: 'string', example: 'john_doe' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized. Invalid or missing token.',
-  })
-  @ApiBearerAuth('access-token')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Req() req: Request & { user: JwtPayload }) {
+  @ApiOperation({ summary: 'Get user profile' })
+  @ApiBearerAuth('access-token')
+  getProfile(@Request() req) {
     return req.user;
   }
 }

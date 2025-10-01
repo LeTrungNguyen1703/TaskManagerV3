@@ -8,20 +8,28 @@ import {
   Delete,
   UseInterceptors,
   Logger,
-  Inject, UseGuards,
+  Inject,
+  UseGuards, Req,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { TaskStatus } from '@prisma/client';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+} from '@nestjs/swagger';
 import {
   CACHE_MANAGER,
   CacheInterceptor,
   Cache,
   CacheKey,
 } from '@nestjs/cache-manager';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '@nestjs/passport';
+import { JwtStrategy } from '../auth/strategies/jwt.strategy';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 export interface TaskInterface {
   id: number;
@@ -51,15 +59,16 @@ export class TasksController {
     @Body() createTaskDto: CreateTaskDto,
   ): Promise<{ task: TaskInterface }> {
     await this.cache.del('tasks');
-    await this.cache.del('tasks/')
+    await this.cache.del('tasks/');
     return { task: await this.tasksService.create(createTaskDto) };
   }
 
   @Get()
   // @CacheKey('all_tasks')
   @ApiBearerAuth('access-token')
-  @UseGuards(AuthGuard)
-  async findAll() {
+  @UseGuards(JwtAuthGuard)
+  async findAll(@Req() req) {
+    this.logger.log(`User ${req.user.username} is retrieving all tasks.`);
     return this.tasksService.findAll();
   }
 

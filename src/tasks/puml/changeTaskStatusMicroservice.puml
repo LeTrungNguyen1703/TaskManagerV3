@@ -1,0 +1,13 @@
+@startuml
+package "Task Manager System" {
+  [User Service] --> [DB: Users]
+  [Task Service] --> [DB: Tasks]
+  [Assignment Service] --> [DB: TaskAssign]
+
+  [Assignment Service] --> [User Service] : get user info
+  [Assignment Service] --> [Task Service] : get task info
+
+  [Task Service] --> (Event Bus) : TASK_STATUS_CHANGED
+  [Assignment Service] --> (Event Bus)
+}
+@enduml

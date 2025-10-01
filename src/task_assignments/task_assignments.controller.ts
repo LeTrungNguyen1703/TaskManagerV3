@@ -6,15 +6,17 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { TaskAssignmentsService } from './task_assignments.service';
 import { CreateTaskAssignmentDto } from './dto/create-task_assignment.dto';
 import { UpdateTaskAssignmentDto } from './dto/update-task_assignment.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import {
   TaskAssignmentFindInterface,
   TaskAssignmentInterface,
 } from './Interfaces/task_assignment.interfaces';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('task-assignments')
 @Controller('task-assignments')
@@ -38,6 +40,8 @@ export class TaskAssignmentsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all task assignments' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard('jwt'))
   @ApiResponse({
     status: 200,
     description: 'List of task assignments returned.',
