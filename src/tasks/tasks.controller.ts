@@ -6,12 +6,22 @@ import {
   Patch,
   Param,
   Delete,
+  UseInterceptors,
+  Logger,
+  Inject, UseGuards,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { TaskStatus } from '@prisma/client';
-import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import {
+  CACHE_MANAGER,
+  CacheInterceptor,
+  Cache,
+  CacheKey,
+} from '@nestjs/cache-manager';
+import { AuthGuard } from '../auth/auth.guard';
 
 export interface TaskInterface {
   id: number;
@@ -23,9 +33,15 @@ export interface TaskInterface {
   updated_at: Date | null;
 }
 
+// @UseInterceptors(CacheInterceptor)
 @Controller('tasks')
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+  private readonly logger = new Logger(TasksController.name);
+
+  constructor(
+    private readonly tasksService: TasksService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new task' })
@@ -34,21 +50,26 @@ export class TasksController {
   async create(
     @Body() createTaskDto: CreateTaskDto,
   ): Promise<{ task: TaskInterface }> {
+    await this.cache.del('tasks');
+    await this.cache.del('tasks/')
     return { task: await this.tasksService.create(createTaskDto) };
   }
 
   @Get()
-  findAll() {
+  // @CacheKey('all_tasks')
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard)
+  async findAll() {
     return this.tasksService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     return this.tasksService.findOne(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
+  async update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
     return this.tasksService.update(+id, updateTaskDto);
   }
 

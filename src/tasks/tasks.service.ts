@@ -1,20 +1,33 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { TaskStatus } from '@prisma/client';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
 @Injectable()
 export class TasksService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(TasksService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+  ) {}
 
   async create(createTaskDto: CreateTaskDto) {
-    return this.prisma.tasks.create({
-      data: createTaskDto,
-    });
+    return this.prisma.tasks.create({ data: createTaskDto });
   }
 
-  findAll() {}
+  async findAll() {
+    const testCache = await this.cache.get('test');
+    if (testCache) {
+      this.logger.log(`✅ Cache HIT: ${testCache}`);
+    } else {
+      this.logger.log('❌ Cache MISS - Setting new cache');
+      await this.cache.set('test', 'This is a test cache value',6000000); // Thêm TTL
+    }
+    return this.prisma.tasks.findMany();
+  }
 
   findOne(id: number) {}
 
@@ -39,7 +52,8 @@ export class TasksService {
     if (!task) {
       throw new NotFoundException(`Task with ID ${id} does not exist.`);
     }
-
-    return { messages: `Task with ID ${id} has been updated to status ${status}` };
+    return {
+      messages: `Task with ID ${id} has been updated to status ${status}`,
+    };
   }
 }
