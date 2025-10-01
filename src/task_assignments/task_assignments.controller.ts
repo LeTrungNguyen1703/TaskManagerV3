@@ -1,14 +1,34 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { TaskAssignmentsService } from './task_assignments.service';
 import { CreateTaskAssignmentDto } from './dto/create-task_assignment.dto';
 import { UpdateTaskAssignmentDto } from './dto/update-task_assignment.dto';
+import { TaskInterface } from '../tasks/tasks.controller';
+
+export interface TaskAssignmentInterface {
+  id: number;
+  tasks: TaskInterface;
+  users: { id: number; username: string; email: string };
+  assigned_at: Date | null; // ISO date string
+}
 
 @Controller('task-assignments')
 export class TaskAssignmentsController {
-  constructor(private readonly taskAssignmentsService: TaskAssignmentsService) {}
+  constructor(
+    private readonly taskAssignmentsService: TaskAssignmentsService,
+  ) {}
 
   @Post()
-  create(@Body() createTaskAssignmentDto: CreateTaskAssignmentDto) {
+  async create(
+    @Body() createTaskAssignmentDto: CreateTaskAssignmentDto,
+  ): Promise<TaskAssignmentInterface> {
     return this.taskAssignmentsService.create(createTaskAssignmentDto);
   }
 
@@ -23,7 +43,10 @@ export class TaskAssignmentsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTaskAssignmentDto: UpdateTaskAssignmentDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateTaskAssignmentDto: UpdateTaskAssignmentDto,
+  ) {
     return this.taskAssignmentsService.update(+id, updateTaskAssignmentDto);
   }
 

@@ -2,30 +2,48 @@ import { Injectable } from '@nestjs/common';
 import { CreateTaskAssignmentDto } from './dto/create-task_assignment.dto';
 import { UpdateTaskAssignmentDto } from './dto/update-task_assignment.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { TaskAssignmentInterface } from './task_assignments.controller';
 
 @Injectable()
-export class TaskAssignmentsService{
+export class TaskAssignmentsService {
+  constructor(private readonly prisma: PrismaService) {}
 
-  constructor(private readonly prisma: PrismaService) {
+  async create(createTaskAssignmentDto: CreateTaskAssignmentDto) {
+    return this.prisma.task_assignments.create({
+      data: createTaskAssignmentDto,
+      include: {
+        users: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+          },
+        },
+        tasks: true
+      },
+    });
   }
 
-  create(createTaskAssignmentDto: CreateTaskAssignmentDto) {
-    return 'This action adds a new taskAssignment';
+  async findAll() {
+    return this.prisma.task_assignments.findMany();
   }
 
-  findAll() {
-    return `This action returns all taskAssignments`;
+  async findOne(id: number) {
+    return this.prisma.task_assignments.findUnique({
+      where: { id },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} taskAssignment`;
+  async update(id: number, updateTaskAssignmentDto: UpdateTaskAssignmentDto) {
+    return this.prisma.task_assignments.update({
+      where: { id },
+      data: updateTaskAssignmentDto,
+    });
   }
 
-  update(id: number, updateTaskAssignmentDto: UpdateTaskAssignmentDto) {
-    return `This action updates a #${id} taskAssignment`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} taskAssignment`;
+  async remove(id: number) {
+    return this.prisma.task_assignments.delete({
+      where: { id },
+    });
   }
 }

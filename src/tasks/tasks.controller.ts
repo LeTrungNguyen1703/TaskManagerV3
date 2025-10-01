@@ -14,6 +14,7 @@ import { TaskStatus } from '@prisma/client';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 export interface TaskInterface {
+  id: number;
   title: string;
   description: string | null;
   status: TaskStatus;
