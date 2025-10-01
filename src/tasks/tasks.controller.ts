@@ -11,7 +11,7 @@ import { TasksService } from './tasks.service';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { TaskStatus } from '@prisma/client';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 
 export interface TaskInterface {
   id: number;
@@ -59,5 +59,25 @@ export class TasksController {
   async remove(@Param('id') id: string): Promise<{ message: string }> {
     await this.tasksService.remove(+id);
     return { message: `Task with ID ${id} has been deleted.` };
+  }
+
+  @Patch(':id/status/:status')
+  @ApiOperation({ summary: 'Change the status of a task' })
+  @ApiResponse({
+    status: 200,
+    description: 'Task status updated successfully.',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid id or status.' })
+  @ApiParam({
+    name: 'status',
+    enum: ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'],
+    description:
+      'New status for the task. Allowed values: PENDING, IN_PROGRESS, COMPLETED, CANCELLED.',
+  })
+  async changeTaskStatus(
+    @Param('id') id: number,
+    @Param('status') status: TaskStatus,
+  ): Promise<{ messages: string }> {
+    return this.tasksService.changeTaskStatus(id, status);
   }
 }

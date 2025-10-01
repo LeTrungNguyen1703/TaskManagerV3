@@ -10,15 +10,13 @@ import {
 import { TaskAssignmentsService } from './task_assignments.service';
 import { CreateTaskAssignmentDto } from './dto/create-task_assignment.dto';
 import { UpdateTaskAssignmentDto } from './dto/update-task_assignment.dto';
-import { TaskInterface } from '../tasks/tasks.controller';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  TaskAssignmentFindInterface,
+  TaskAssignmentInterface,
+} from './Interfaces/task_assignment.interfaces';
 
-export interface TaskAssignmentInterface {
-  id: number;
-  tasks: TaskInterface;
-  users: { id: number; username: string; email: string };
-  assigned_at: Date | null; // ISO date string
-}
-
+@ApiTags('task-assignments')
 @Controller('task-assignments')
 export class TaskAssignmentsController {
   constructor(
@@ -26,6 +24,12 @@ export class TaskAssignmentsController {
   ) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new task assignment' })
+  @ApiResponse({
+    status: 201,
+    description: 'Task assignment created successfully.',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data.' })
   async create(
     @Body() createTaskAssignmentDto: CreateTaskAssignmentDto,
   ): Promise<TaskAssignmentInterface> {
@@ -33,16 +37,30 @@ export class TaskAssignmentsController {
   }
 
   @Get()
-  findAll() {
+  @ApiOperation({ summary: 'Get all task assignments' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of task assignments returned.',
+  })
+  async findAll(): Promise<TaskAssignmentFindInterface[]> {
     return this.taskAssignmentsService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  @ApiOperation({ summary: 'Get a task assignment by ID' })
+  @ApiResponse({ status: 200, description: 'Task assignment returned.' })
+  @ApiResponse({ status: 404, description: 'Task assignment not found.' })
+  async findOne(@Param('id') id: string): Promise<TaskAssignmentFindInterface> {
     return this.taskAssignmentsService.findOne(+id);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a task assignment' })
+  @ApiResponse({
+    status: 200,
+    description: 'Task assignment updated successfully.',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data.' })
   update(
     @Param('id') id: string,
     @Body() updateTaskAssignmentDto: UpdateTaskAssignmentDto,
@@ -51,6 +69,12 @@ export class TaskAssignmentsController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete a task assignment' })
+  @ApiResponse({
+    status: 200,
+    description: 'Task assignment deleted successfully.',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid id.' })
   remove(@Param('id') id: string) {
     return this.taskAssignmentsService.remove(+id);
   }

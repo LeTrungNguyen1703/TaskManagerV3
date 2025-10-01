@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { TasksModule } from './tasks/tasks.module';
 import { TaskAssignmentsModule } from './task_assignments/task_assignments.module';
 import { AuthModule } from './auth/auth.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AuthModule } from './auth/auth.module';
     TasksModule,
     TaskAssignmentsModule,
     AuthModule,
+    CacheModule.register({})
   ],
   controllers: [AppController],
   providers: [AppService],

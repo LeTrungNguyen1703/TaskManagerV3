@@ -33,7 +33,9 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiResponse({ status: 200, description: 'List of users returned.' })
+  async findAll(): Promise<User[]> {
     return this.usersService.findAll();
   }
 
