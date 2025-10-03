@@ -3,7 +3,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { TaskStatus } from '@prisma/client';
-import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class TasksService {
@@ -15,23 +15,31 @@ export class TasksService {
   ) {}
 
   async create(createTaskDto: CreateTaskDto) {
-    return this.prisma.tasks.create({ data: createTaskDto });
+    const task = await this.prisma.tasks.create({ data: createTaskDto });
+
+    // Clear cache khi có task mới
+    await this.cache.del('tasks:all');
+    this.logger.log('🗑️ Cleared tasks cache after creating new task');
+
+    return task;
   }
 
   async findAll() {
-    const testCache = await this.cache.get('test');
-    if (testCache) {
-      this.logger.log(`✅ Cache HIT: ${testCache}`);
-    } else {
-      this.logger.log('❌ Cache MISS - Setting new cache');
-      await this.cache.set('test', 'This is a test cache value',6000000); // Thêm TTL
-    }
-    return this.prisma.tasks.findMany();
+    return this.prisma.tasks.findMany({
+      orderBy: { created_at: 'desc' },
+    });
   }
 
-  findOne(id: number) {}
+  findOne(id: number) {
+    return this.prisma.tasks.findUnique({ where: { id } });
+  }
 
-  update(id: number, updateTaskDto: UpdateTaskDto) {}
+  update(id: number, updateTaskDto: UpdateTaskDto) {
+    return this.prisma.tasks.update({
+      where: { id },
+      data: updateTaskDto,
+    });
+  }
 
   async remove(id: number) {
     const count = await this.prisma.tasks.deleteMany({
@@ -41,6 +49,11 @@ export class TasksService {
     if (count.count === 0) {
       throw new NotFoundException(`Task with ID ${id} does not exist.`);
     }
+
+    // Clear cache khi xóa task
+    await this.cache.del('tasks:all');
+    await this.cache.del(`/tasks/${id}`);
+    this.logger.log('🗑️ Cleared tasks cache after deleting task');
   }
 
   async changeTaskStatus(id: number, status: TaskStatus) {
@@ -52,6 +65,11 @@ export class TasksService {
     if (!task) {
       throw new NotFoundException(`Task with ID ${id} does not exist.`);
     }
+
+    // Clear cache khi update task status
+    await this.cache.del('tasks:all');
+    this.logger.log('🗑️ Cleared tasks cache after updating task status');
+
     return {
       messages: `Task with ID ${id} has been updated to status ${status}`,
     };

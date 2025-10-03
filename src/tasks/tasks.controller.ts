@@ -9,7 +9,8 @@ import {
   UseInterceptors,
   Logger,
   Inject,
-  UseGuards, Req,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -41,7 +42,7 @@ export interface TaskInterface {
   updated_at: Date | null;
 }
 
-// @UseInterceptors(CacheInterceptor)
+@UseInterceptors(CacheInterceptor)
 @Controller('tasks')
 export class TasksController {
   private readonly logger = new Logger(TasksController.name);
@@ -64,7 +65,7 @@ export class TasksController {
   }
 
   @Get()
-  // @CacheKey('all_tasks')
+  @CacheKey('tasks:all')
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   async findAll(@Req() req) {
