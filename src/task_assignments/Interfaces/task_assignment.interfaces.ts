@@ -14,3 +14,7 @@ export interface TaskAssignmentFindInterface {
   users: { id: number; username: string; email: string}
   assigned_at: Date | null;
 }
+
+export interface TaskIdInterface {
+  task_id: number;
+}

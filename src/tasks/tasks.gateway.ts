@@ -16,13 +16,11 @@ import { TasksModule } from './tasks.module';
 import { TaskInterface } from './tasks.controller';
 import { jwtConstants } from '../auth/constants';
 import { TaskAssignmentsService } from '../task_assignments/task_assignments.service';
+import { TaskIdInterface } from '../task_assignments/Interfaces/task_assignment.interfaces';
 
 @WebSocketGateway()
 export class TasksGateway implements OnGatewayConnection, OnModuleInit {
-  constructor(
-    private readonly jwtService: JwtService,
-    private readonly taskAssignments: TaskAssignmentsService,
-  ) {}
+  constructor(private readonly jwtService: JwtService) {}
 
   private readonly logger = new Logger(TasksGateway.name);
   private client: Socket & { user: JwtPayload };
@@ -61,11 +59,11 @@ export class TasksGateway implements OnGatewayConnection, OnModuleInit {
   @SubscribeMessage('joinTask')
   async handleJoinTask(
     @ConnectedSocket() client: Socket & { user: JwtPayload },
+    @MessageBody() tasksAssignmentList: TaskIdInterface[],
   ) {
     const userId = client.user.sub;
 
-    const tasksList = await this.taskAssignments.findTaskByUserId(userId);
-    tasksList.forEach((task) => {
+    tasksAssignmentList.forEach((task) => {
       client.join(`tasks:${task.task_id}`);
       this.logger.log(`User ID: ${userId} joined room tasks:${task.task_id}`);
     });
@@ -77,5 +75,9 @@ export class TasksGateway implements OnGatewayConnection, OnModuleInit {
     title: string;
   }) {
     this.server.to(`tasks:${data.taskId}`).emit('tasksStatusUpdated', data);
+  }
+
+  handleUserAssignedToTask(data: any) {
+    this.server.to(`tasks:${data.taskId}`).emit('userAssignedToTask', data);
   }
 }

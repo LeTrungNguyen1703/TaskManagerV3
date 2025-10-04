@@ -11,12 +11,18 @@ import {
 import { TaskAssignmentsService } from './task_assignments.service';
 import { CreateTaskAssignmentDto } from './dto/create-task_assignment.dto';
 import { UpdateTaskAssignmentDto } from './dto/update-task_assignment.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import {
   TaskAssignmentFindInterface,
-  TaskAssignmentInterface,
+  TaskAssignmentInterface, TaskIdInterface,
 } from './Interfaces/task_assignment.interfaces';
 import { AuthGuard } from '@nestjs/passport';
+import { TaskInterface } from '../tasks/tasks.controller';
 
 @ApiTags('task-assignments')
 @Controller('task-assignments')
@@ -81,5 +87,18 @@ export class TaskAssignmentsController {
   @ApiResponse({ status: 400, description: 'Invalid id.' })
   remove(@Param('id') id: string) {
     return this.taskAssignmentsService.remove(+id);
+  }
+
+  @Get('user/:userId/tasks')
+  @ApiOperation({ summary: 'Get all tasks assigned to a specific user' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of tasks assigned to the user returned.',
+  })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  async findTasksByUserId(
+    @Param('userId') userId: string,
+  ): Promise<TaskIdInterface[]> {
+    return this.taskAssignmentsService.findTaskByUserId(+userId);
   }
 }

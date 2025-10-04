@@ -13,6 +13,8 @@ import { RedisModule } from './redis/redis.module';
 import { CacheableMemory, Keyv } from 'cacheable';
 import KeyvRedis from '@keyv/redis';
 import { CacheModule } from '@nestjs/cache-manager';
+import { BullModule } from '@nestjs/bullmq';
+import { QUEUE_NAMES } from '../queue-constants';
 
 @Module({
   imports: [
@@ -39,6 +41,15 @@ import { CacheModule } from '@nestjs/cache-manager';
         };
       },
     }),
+    BullModule.forRoot({
+      connection: {
+        host: 'localhost',
+        port: 6379,
+      },
+    }),
+    BullModule.registerQueue(
+      {name: QUEUE_NAMES.TASK_EVENTS}
+    ),
   ],
   controllers: [AppController],
   providers: [AppService],
