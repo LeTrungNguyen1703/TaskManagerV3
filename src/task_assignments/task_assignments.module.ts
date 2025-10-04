@@ -5,5 +5,6 @@ import { TaskAssignmentsController } from './task_assignments.controller';
 @Module({
   controllers: [TaskAssignmentsController],
   providers: [TaskAssignmentsService],
+  exports: [TaskAssignmentsService],
 })
 export class TaskAssignmentsModule {}

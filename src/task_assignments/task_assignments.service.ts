@@ -52,4 +52,10 @@ export class TaskAssignmentsService {
       where: { id },
     });
   }
+
+  async findTaskByUserId(userId: number) {
+    return this.prisma.task_assignments.findMany({
+      where: { user_id: userId },
+    });
+  }
 }

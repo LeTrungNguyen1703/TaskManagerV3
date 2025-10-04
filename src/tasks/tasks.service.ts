@@ -4,6 +4,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { TaskStatus } from '@prisma/client';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { TasksGateway } from './tasks.gateway';
 
 @Injectable()
 export class TasksService {
@@ -12,6 +13,7 @@ export class TasksService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    private readonly tasksGateway: TasksGateway,
   ) {}
 
   async create(createTaskDto: CreateTaskDto) {
@@ -62,12 +64,16 @@ export class TasksService {
       data: { status },
     });
 
+
     if (!task) {
       throw new NotFoundException(`Task with ID ${id} does not exist.`);
     }
 
     // Clear cache khi update task status
     await this.cache.del('tasks:all');
+
+    this.tasksGateway.handleTaskStatusUpdate({ taskId: id, status: status, title: task.title });
+
     this.logger.log('🗑️ Cleared tasks cache after updating task status');
 
     return {
