@@ -59,13 +59,13 @@ export class TasksGateway implements OnGatewayConnection, OnModuleInit {
   @SubscribeMessage('joinTask')
   async handleJoinTask(
     @ConnectedSocket() client: Socket & { user: JwtPayload },
-    @MessageBody() tasksAssignmentList: TaskIdInterface[],
+    @MessageBody() tasksAssignmentList: number[],
   ) {
     const userId = client.user.sub;
 
     tasksAssignmentList.forEach((task) => {
-      client.join(`tasks:${task.task_id}`);
-      this.logger.log(`User ID: ${userId} joined room tasks:${task.task_id}`);
+      client.join(`tasks:${task}`);
+      this.logger.log(`User ID: ${userId} joined room tasks:${task}`);
     });
   }
 
@@ -77,7 +77,7 @@ export class TasksGateway implements OnGatewayConnection, OnModuleInit {
     this.server.to(`tasks:${data.taskId}`).emit('tasksStatusUpdated', data);
   }
 
-  handleUserAssignedToTask(data: any) {
+  async handleUserAssignedToTask(data: any) {
     this.server.to(`tasks:${data.taskId}`).emit('userAssignedToTask', data);
   }
 }

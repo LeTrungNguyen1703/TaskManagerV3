@@ -27,7 +27,7 @@ export class TasksEventsProcessor extends WorkerHost {
 
     const { taskId, userId } = job.data;
     try {
-      this.taskGateway.handleUserAssignedToTask(job.data);
+      await this.taskGateway.handleUserAssignedToTask(job.data);
       return {
         success: true,
         taskId: taskId,
